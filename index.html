@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>홍길동 & 김우주 결혼합니다</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Noto Serif KR & Gowun Batang for Korean calligraphy style -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Noto+Serif+KR:wght@300;400;600;700&family=Pretendard:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <!-- Leaflet.js CSS for Map -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        cream: '#FAF7F2',
+                        warmBg: '#F7F3EE',
+                        accentGold: '#C5A059',
+                        softPink: '#E8D5C8',
+                        charcoal: '#333333',
+                        roseAccent: '#D8A798'
+                    },
+                    fontFamily: {
+                        serif: ['Noto Serif KR', 'serif'],
+                        batang: ['Gowun Batang', 'serif'],
+                        sans: ['Pretendard', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #ECE9E4;
+            font-family: 'Pretendard', sans-serif;
+            color: #333333;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .font-serif-kr { font-family: 'Noto Serif KR', serif; }
+        .font-batang { font-family: 'Gowun Batang', serif; }
+
+        .mobile-container {
+            max-width: 480px;
+            margin: 0 auto;
+            background-color: #FAF7F2;
+            min-height: 100vh;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        .fade-in-section {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+        }
+        .fade-in-section.is-visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        #map {
+            height: 320px;
+            width: 100%;
+            border-radius: 12px;
+            z-index: 10;
+        }
+
+        /* Leaflet custom marker animation */
+        .custom-map-marker {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div class="mobile-container relative pb-16">
+
+        <!-- HEADER / HERO SECTION -->
+        <header class="relative text-center overflow-hidden">
+            <div class="pt-12 pb-6 px-4 bg-cream text-center">
+                <span class="text-xs uppercase tracking-widest text-accentGold font-semibold mb-2 block">Wedding Invitation</span>
+                <h1 class="text-2xl font-serif-kr text-charcoal tracking-wide">홍길동 <span class="text-roseAccent">&</span> 김우주</h1>
+                <p class="text-xs text-gray-500 mt-2 tracking-wider">2027. 10. 09 SAT PM 12:00</p>
+            </div>
+
+            <!-- Main Cover Photo -->
+            <div class="relative w-full aspect-[4/5] overflow-hidden">
+                <img src="wedding5.jpg" alt="홍길동 김우주 웨딩 메인 사진" class="w-full h-full object-cover object-top" onerror="this.onerror=null; this.src='https://placehold.co/600x750/E8D5C8/333333?text=Wedding+Photo';">
+                <div class="absolute inset-0 bg-gradient-to-t from-cream via-transparent to-transparent opacity-80"></div>
+            </div>
+
+            <div class="px-6 py-6 bg-cream text-center">
+                <p class="font-batang text-lg text-gray-700 leading-relaxed">
+                    저희 두 사람이 사랑과 신뢰로<br>
+                    하나가 되는 소중한 날입니다.<br>
+                    기쁜 자리에 함께하시어 축복해 주시면<br>
+                    더없는 기쁨으로 간직하겠습니다.
+                </p>
+            </div>
+        </header>
+
+        <section class="py-10 px-6 bg-white my-4 mx-4 rounded-2xl shadow-sm text-center fade-in-section">
+            <h2 class="text-sm font-semibold tracking-widest text-accentGold uppercase mb-2">Save the Date</h2>
+            <p class="text-lg font-serif-kr text-charcoal font-semibold mb-6">2027년 10월 9일 토요일 오후 12:00</p>
+            
+            <div class="grid grid-cols-4 gap-2 text-center max-w-xs mx-auto">
+                <div class="bg-warmBg p-3 rounded-xl border border-stone-200">
+                    <span id="days" class="block text-xl font-bold font-serif-kr text-accentGold">00</span>
+                    <span class="text-[10px] text-gray-500 uppercase mt-1 block">Days</span>
+                </div>
+                <div class="bg-warmBg p-3 rounded-xl border border-stone-200">
+                    <span id="hours" class="block text-xl font-bold font-serif-kr text-accentGold">00</span>
+                    <span class="text-[10px] text-gray-500 uppercase mt-1 block">Hours</span>
+                </div>
+                <div class="bg-warmBg p-3 rounded-xl border border-stone-200">
+                    <span id="minutes" class="block text-xl font-bold font-serif-kr text-accentGold">00</span>
+                    <span class="text-[10px] text-gray-500 uppercase mt-1 block">Mins</span>
+                </div>
+                <div class="bg-warmBg p-3 rounded-xl border border-stone-200">
+                    <span id="seconds" class="block text-xl font-bold font-serif-kr text-accentGold">00</span>
+                    <span class="text-[10px] text-gray-500 uppercase mt-1 block">Secs</span>
+                </div>
+            </div>
+            <p id="countdown-message" class="text-xs text-roseAccent font-medium mt-4">홍길동 ♥ 김우주의 결혼식이 다가옵니다</p>
+        </section>
+
+        <section class="py-10 px-6 bg-cream text-center fade-in-section">
+            <div class="inline-block border-b-2 border-accentGold pb-1 mb-8">
+                <h2 class="text-base font-serif-kr text-charcoal font-semibold">신랑 & 신부에게 연락하기</h2>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div class="bg-white p-5 rounded-2xl border border-stone-100 shadow-sm flex flex-col items-center">
+                    <span class="text-xs text-gray-400 mb-1">GROOM</span>
+                    <h3 class="font-serif-kr font-bold text-lg text-charcoal mb-3">신랑 홍길동</h3>
+                    <div class="flex gap-2 w-full">
+                        <a href="tel:000-0000-0000" class="flex-1 bg-warmBg hover:bg-stone-200 text-charcoal text-xs py-2 px-3 rounded-lg font-medium transition flex items-center justify-center gap-1">
+                            <i class="fa-solid fa-phone text-xs text-accentGold"></i> 전화
+                        </a>
+                        <a href="sms:000-0000-0000" class="flex-1 bg-warmBg hover:bg-stone-200 text-charcoal text-xs py-2 px-3 rounded-lg font-medium transition flex items-center justify-center gap-1">
+                            <i class="fa-solid fa-comment text-xs text-accentGold"></i> 문자
+                        </a>
+                    </div>
+                </div>
+
+                <div class="bg-white p-5 rounded-2xl border border-stone-100 shadow-sm flex flex-col items-center">
+                    <span class="text-xs text-gray-400 mb-1">BRIDE</span>
+                    <h3 class="font-serif-kr font-bold text-lg text-charcoal mb-3">신부 김우주</h3>
+                    <div class="flex gap-2 w-full">
+                        <a href="tel:000-0000-0000" class="flex-1 bg-warmBg hover:bg-stone-200 text-charcoal text-xs py-2 px-3 rounded-lg font-medium transition flex items-center justify-center gap-1">
+                            <i class="fa-solid fa-phone text-xs text-roseAccent"></i> 전화
+                        </a>
+                        <a href="sms:000-0000-0000" class="flex-1 bg-warmBg hover:bg-stone-200 text-charcoal text-xs py-2 px-3 rounded-lg font-medium transition flex items-center justify-center gap-1">
+                            <i class="fa-solid fa-comment text-xs text-roseAccent"></i> 문자
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="py-10 px-6 bg-white my-4 mx-4 rounded-2xl shadow-sm fade-in-section">
+            <div class="text-center mb-6">
+                <span class="text-xs uppercase tracking-widest text-accentGold font-semibold block">Gallery</span>
+                <h2 class="text-lg font-serif-kr text-charcoal font-semibold mt-1">우리의 소중한 순간</h2>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <div class="col-span-2 cursor-pointer rounded-xl overflow-hidden shadow-sm aspect-[4/3]" onclick="openLightbox('wedding5.jpg')">
+                    <img src="wedding5.jpg" alt="웨딩 갤러리 5" class="w-full h-full object-cover hover:scale-105 transition duration-300" onerror="this.onerror=null; this.src='https://placehold.co/600x400/E8D5C8/333333?text=Photo+1';">
+                </div>
+                <div class="cursor-pointer rounded-xl overflow-hidden shadow-sm aspect-square" onclick="openLightbox('wedding1.jpg')">
+                    <img src="wedding1.jpg" alt="웨딩 갤러리 1" class="w-full h-full object-cover hover:scale-105 transition duration-300" onerror="this.onerror=null; this.src='https://placehold.co/400x400/E8D5C8/333333?text=Photo+2';">
+                </div>
+                <div class="cursor-pointer rounded-xl overflow-hidden shadow-sm aspect-square" onclick="openLightbox('wedding2.jpg')">
+                    <img src="wedding2.jpg" alt="웨딩 갤러리 2" class="w-full h-full object-cover hover:scale-105 transition duration-300" onerror="this.onerror=null; this.src='https://placehold.co/400x400/E8D5C8/333333?text=Photo+3';">
+                </div>
+                <div class="cursor-pointer rounded-xl overflow-hidden shadow-sm aspect-square" onclick="openLightbox('wedding3.jpg')">
+                    <img src="wedding3.jpg" alt="웨딩 갤러리 3" class="w-full h-full object-cover hover:scale-105 transition duration-300" onerror="this.onerror=null; this.src='https://placehold.co/400x400/E8D5C8/333333?text=Photo+4';">
+                </div>
+                <div class="cursor-pointer rounded-xl overflow-hidden shadow-sm aspect-square" onclick="openLightbox('wedding4.jpg')">
+                    <img src="wedding4.jpg" alt="웨딩 갤러리 4" class="w-full h-full object-cover hover:scale-105 transition duration-300" onerror="this.onerror=null; this.src='https://placehold.co/400x400/E8D5C8/333333?text=Photo+5';">
+                </div>
+            </div>
+        </section>
+
+        <!-- Lightbox Modal -->
+        <div id="lightbox" class="fixed inset-0 bg-black/90 z-50 hidden flex items-center justify-center p-4" onclick="closeLightbox()">
+            <button class="absolute top-6 right-6 text-white text-2xl" onclick="closeLightbox()">&times;</button>
+            <img id="lightbox-img" src="" alt="확대 이미지" class="max-w-full max-h-[85vh] object-contain rounded-lg">
+        </div>
+
+        <section class="py-10 px-6 bg-cream fade-in-section">
+            <div class="text-center mb-6">
+                <span class="text-xs uppercase tracking-widest text-accentGold font-semibold block">Location</span>
+                <h2 class="text-lg font-serif-kr text-charcoal font-semibold mt-1">오시는 길</h2>
+                <p class="text-base font-bold text-charcoal mt-3">서울신라호텔</p>
+                <p class="text-xs text-gray-500 mt-1">서울특별시 중구 동호로 249</p>
+            </div>
+
+            <!-- Leaflet Container using Esri WorldTopo Map (No 403 blocks) -->
+            <div class="bg-white p-2 rounded-2xl shadow-sm border border-stone-100 mb-6">
+                <div id="map"></div>
+                <p class="text-[11px] text-gray-400 text-center mt-2">※ 지도 위 손가락 조작 또는 +/- 버튼으로 자유롭게 확대/축소가 가능합니다.</p>
+            </div>
+
+            <!-- Nav App Buttons -->
+            <div class="grid grid-cols-3 gap-2">
+                <a href="https://map.kakao.com/link/search/서울신라호텔" target="_blank" class="bg-yellow-100 hover:bg-yellow-200 text-yellow-900 py-2.5 px-2 rounded-xl text-xs font-medium text-center flex flex-col items-center justify-center gap-1 transition">
+                    <i class="fa-solid fa-map-location-dot"></i> 카카오맵
+                </a>
+                <a href="https://map.naver.com/v5/search/서울신라호텔" target="_blank" class="bg-green-100 hover:bg-green-200 text-green-900 py-2.5 px-2 rounded-xl text-xs font-medium text-center flex flex-col items-center justify-center gap-1 transition">
+                    <i class="fa-solid fa-location-arrow"></i> 네이버 지도
+                </a>
+                <a href="https://tmap.co.kr" target="_blank" class="bg-blue-100 hover:bg-blue-200 text-blue-900 py-2.5 px-2 rounded-xl text-xs font-medium text-center flex flex-col items-center justify-center gap-1 transition">
+                    <i class="fa-solid fa-car"></i> 티맵
+                </a>
+            </div>
+        </section>
+
+        <section class="py-10 px-6 bg-white my-4 mx-4 rounded-2xl shadow-sm fade-in-section">
+            <div class="text-center mb-6">
+                <span class="text-xs uppercase tracking-widest text-accentGold font-semibold block">Registry</span>
+                <h2 class="text-lg font-serif-kr text-charcoal font-semibold mt-1">마음 전하실 곳</h2>
+                <p class="text-xs text-gray-500 mt-2 leading-relaxed">
+                    축하의 마음을 담아 축의금을 전달하실 수 있습니다.<br>
+                    계좌번호 버튼을 누르시면 복사됩니다.
+                </p>
+            </div>
+
+            <div class="space-y-4">
+                <!-- Groom Account -->
+                <div class="bg-warmBg p-4 rounded-xl border border-stone-200">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-xs font-bold text-accentGold uppercase">신랑측 계좌번호</span>
+                        <span class="text-xs text-gray-500">홍길동</span>
+                    </div>
+                    <div class="flex justify-between items-center bg-white p-3 rounded-lg border border-stone-100">
+                        <span class="text-sm font-semibold text-charcoal tracking-wide">123-5455-7585</span>
+                        <button onclick="copyToClipboard('123-5455-7585', '신랑 계좌번호가')" class="bg-accentGold hover:bg-amber-700 text-white text-xs px-3 py-1.5 rounded-md font-medium transition active:scale-95">
+                            복사하기
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Bride Account -->
+                <div class="bg-warmBg p-4 rounded-xl border border-stone-200">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-xs font-bold text-roseAccent uppercase">신부측 계좌번호</span>
+                        <span class="text-xs text-gray-500">김우주</span>
+                    </div>
+                    <div class="flex justify-between items-center bg-white p-3 rounded-lg border border-stone-100">
+                        <span class="text-sm font-semibold text-charcoal tracking-wide">123-4481-1523</span>
+                        <button onclick="copyToClipboard('123-4481-1523', '신부 계좌번호가')" class="bg-roseAccent hover:bg-rose-400 text-white text-xs px-3 py-1.5 rounded-md font-medium transition active:scale-95">
+                            복사하기
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="py-10 px-6 bg-cream text-center fade-in-section">
+            <div class="mb-6">
+                <span class="text-xs uppercase tracking-widest text-accentGold font-semibold block">RSVP</span>
+                <h2 class="text-lg font-serif-kr text-charcoal font-semibold mt-1">참석 여부 전달하기</h2>
+                <p class="text-xs text-gray-500 mt-2">원활한 예식 진행을 위해 참석 여부를 알려주세요.</p>
+            </div>
+
+            <form id="rsvp-form" onsubmit="handleRSVP(event)" class="bg-white p-5 rounded-2xl shadow-sm border border-stone-100 space-y-4 text-left">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">구분</label>
+                    <div class="flex gap-4">
+                        <label class="flex items-center gap-2 text-xs text-charcoal">
+                            <input type="radio" name="side" value="groom" checked class="accent-accentGold"> 신랑측
+                        </label>
+                        <label class="flex items-center gap-2 text-xs text-charcoal">
+                            <input type="radio" name="side" value="bride" class="accent-roseAccent"> 신부측
+                        </label>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">성함</label>
+                    <input type="text" required placeholder="성함을 입력해주세요" class="w-full text-xs p-3 rounded-lg border border-stone-200 focus:outline-none focus:border-accentGold">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">참석 인원</label>
+                    <select class="w-full text-xs p-3 rounded-lg border border-stone-200 focus:outline-none focus:border-accentGold bg-white">
+                        <option value="1">본인 1명</option>
+                        <option value="2">동반 1인 (총 2명)</option>
+                        <option value="3">동반 2인 (총 3명)</option>
+                        <option value="4">동반 3인 이상</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">식사 여부</label>
+                    <div class="flex gap-4">
+                        <label class="flex items-center gap-2 text-xs text-charcoal">
+                            <input type="radio" name="meal" value="yes" checked class="accent-accentGold"> 식사 가능
+                        </label>
+                        <label class="flex items-center gap-2 text-xs text-charcoal">
+                            <input type="radio" name="meal" value="no" class="accent-accentGold"> 식사 안함
+                        </label>
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full bg-charcoal hover:bg-black text-white text-xs font-semibold py-3 rounded-xl transition shadow-md">
+                    참석 여부 제출하기
+                </button>
+            </form>
+        </section>
+
+        <footer class="py-8 text-center bg-warmBg border-t border-stone-200">
+            <p class="font-serif-kr text-sm text-charcoal font-semibold">홍길동 ♥ 김우주</p>
+            <p class="text-[10px] text-gray-400 mt-1">Thank you for sharing this special day with us.</p>
+        </footer>
+
+        <!-- Toast Notice -->
+        <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-charcoal text-white text-xs px-4 py-2.5 rounded-full shadow-lg opacity-0 pointer-events-none transition-opacity duration-300 z-50">
+            계좌번호가 복사되었습니다.
+        </div>
+
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const shillaLat = 37.5558;
+            const shillaLng = 127.0053;
+
+            // Initialize Leaflet Map
+            const map = L.map('map', {
+                center: [shillaLat, shillaLng],
+                zoom: 16,
+                zoomControl: true,
+                scrollWheelZoom: true
+            });
+
+            // Use Esri World Topo Map Tiles (No 403 User-Agent blocking)
+            const esriTile = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
+                maxZoom: 18,
+                attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ, TomTom, Intermap, iPC, USGS, FAO, NPS, NRCAN, GeoBase, Kadaster NL, Ordnance Survey, Esri Japan, METI, Esri China (Hong Kong), and the GIS User Community'
+            });
+
+            esriTile.addTo(map);
+
+            // Red Red Pin Marker
+            const customIcon = L.divIcon({
+                className: 'custom-map-marker',
+                html: `<div style="background-color: #C5A059; width: 32px; height: 32px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); display: flex; align-items: center; justify-content: center; border: 2px solid white; box-shadow: 0 4px 6px rgba(0,0,0,0.3);"><i class="fa-solid fa-heart" style="transform: rotate(45deg); color: white; font-size: 14px;"></i></div>`,
+                iconSize: [32, 32],
+                iconAnchor: [16, 32],
+                popupAnchor: [0, -32]
+            });
+
+            const marker = L.marker([shillaLat, shillaLng], { icon: customIcon }).addTo(map);
+            marker.bindPopup("<div style='font-size:12px; font-weight:bold; text-align:center;'>서울신라호텔</div><div style='font-size:11px; color:#666; text-align:center; margin-top:2px;'>서울특별시 중구 동호로 249</div>").openPopup();
+
+            // Scroll Fade animation observer
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('is-visible');
+                    }
+                });
+            }, { threshold: 0.1 });
+
+            document.querySelectorAll('.fade-in-section').forEach(section => {
+                observer.observe(section);
+            });
+        });
+
+        // D-Day Countdown Timer
+        const weddingDate = new Date('2027-10-09T12:00:00+09:00').getTime();
+
+        function updateCountdown() {
+            const now = new Date().getTime();
+            const difference = weddingDate - now;
+
+            if (difference > 0) {
+                const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((difference % (1000 * 60)) / 1000);
+
+                document.getElementById('days').innerText = String(days).padStart(2, '0');
+                document.getElementById('hours').innerText = String(hours).padStart(2, '0');
+                document.getElementById('minutes').innerText = String(minutes).padStart(2, '0');
+                document.getElementById('seconds').innerText = String(seconds).padStart(2, '0');
+            } else {
+                document.getElementById('countdown-message').innerText = "오늘은 홍길동 ♥ 김우주의 결혼식 날입니다!";
+            }
+        }
+        setInterval(updateCountdown, 1000);
+        updateCountdown();
+
+        // Clipboard Copying
+        function copyToClipboard(text, label) {
+            const tempInput = document.createElement("input");
+            tempInput.value = text;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand("copy");
+            document.body.removeChild(tempInput);
+
+            showToast(`${label} 클립보드에 복사되었습니다.`);
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById("toast");
+            toast.innerText = message;
+            toast.classList.remove("opacity-0", "pointer-events-none");
+            toast.classList.add("opacity-100");
+
+            setTimeout(() => {
+                toast.classList.remove("opacity-100");
+                toast.classList.add("opacity-0", "pointer-events-none");
+            }, 2500);
+        }
+
+        // Lightbox Handler
+        function openLightbox(imageSrc) {
+            const lightbox = document.getElementById('lightbox');
+            const lightboxImg = document.getElementById('lightbox-img');
+            lightboxImg.src = imageSrc;
+            lightbox.classList.remove('hidden');
+        }
+
+        function closeLightbox() {
+            document.getElementById('lightbox').classList.add('hidden');
+        }
+
+        // RSVP Submit Handler
+        function handleRSVP(event) {
+            event.preventDefault();
+            showToast("참석 의사가 전달되었습니다. 감사합니다!");
+            event.target.reset();
+        }
+    </script>
+</body>
+</html>
